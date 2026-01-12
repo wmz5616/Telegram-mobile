@@ -1,0 +1,155 @@
+第一部分：UI 架构设计 (UI Architecture)
+我们将应用分为四个核心层级：导航层、列表层、会话层、详情与设置层。
+
+1. 导航与框架 (Navigation & Skeleton)
+Telegram 的移动端导航结构非常独特，混合了侧边栏（Android风格）和底部Tab（部分iOS风格或文件夹视图）。
+
+根布局 (RootLayout):
+
+Drawer (侧边栏):
+
+头部: 当前账户头像（支持多账号切换）、昵称、手机号、夜间模式切换按钮。
+
+菜单项: New Group, Contacts, Calls, People Nearby, Saved Messages, Settings。
+
+Folder Tabs (文件夹标签栏):
+
+位于 AppBar 下方。
+
+标签: All Chats, Personal, Work, Unread (用户自定义)。
+
+交互: 支持横向滑动切换视图。
+
+2. 主页/会话列表 (Home / Chat List)
+这是用户进入后的第一屏。
+
+UI 组件:
+
+TGAppBar: 包含 Hamburger 菜单图标、标题 ("Telegram" 或 "Connecting...")、搜索图标。
+
+ChatList (ListView): 高性能列表，支持成千上万条数据流畅滚动。
+
+ChatListItem (核心组件):
+
+左侧: 圆形头像 (Avatar)，支持显示在线绿点。
+
+中间: 上方显示昵称/群名（支持 Emoji）；下方显示最后一条消息预览（支持 "Draft: " 前缀，支持 "You: " 前缀）。
+
+右侧: 消息时间；未读消息计数气泡 (Badge)；静音图标；发送状态 (单勾/双勾 - 仅对自己发送的消息)。
+
+交互: 长按触发多选模式；左滑触发归档/删除；右滑触发置顶/标为已读。
+
+Floating Action Button (FAB): 悬浮笔形图标，点击发起新聊天。
+
+3. 聊天详情页 (Chat Screen) - 最复杂界面
+UI 组件:
+
+ChatAppBar: 显示对方头像、昵称、最后上线时间/打字状态 ("typing...")。点击跳转详情页。
+
+ChatBackground: 支持纯色、图案或自定义图片背景。
+
+MessageList (消息流):
+
+DateSeparator: 日期分隔条 (浮动吸顶效果)。
+
+MessageBubble (气泡):
+
+入站消息 (Inbound): 左对齐，白色/深灰色背景。
+
+出站消息 (Outbound): 右对齐，绿色/蓝色背景。
+
+尾巴 (Tail): 气泡尖角，根据连续消息逻辑自动隐藏/显示。
+
+内容区: 文本、图片(Hero动画)、视频(缩略图)、文件(下载进度环)、语音(波形图)。
+
+引用区 (Reply): 位于气泡内部上方，显示被回复消息的缩略图和文本。
+
+InputPanel (输入面板):
+
+左侧: 表情按钮 (切换键盘/Emoji面板)。
+
+中间: TextField，自适应高度，支持 @提及。
+
+右侧: 附件按钮 (回形针)。
+
+最右侧: 动态按钮 (输入文字时显示“发送”，未输入时显示“麦克风”)。
+
+录音交互: 按住麦克风录音，上滑锁定录音，左滑取消录音。
+
+4. 详情与设置 (Details & Settings)
+Profile Screen (个人/群组资料):
+
+SliverAppBar (可伸缩头部)，显示大头像。
+
+信息栏: 手机号 (Username)、Bio。
+
+媒体概览 (Media Overview): 横向滚动的图片缩略图。
+
+功能开关: Notifications (通知), Data (数据)。
+
+Settings Screen:
+
+标准的列表布局，包含 Chat Settings (调整字号、背景), Privacy and Security, Data and Storage。
+
+第二部分：功能逻辑设计 (Functional Logic)
+为了实现流畅体验，逻辑层必须与 UI 层解耦。
+
+1. 数据模型 (Data Models - Schema)
+我们将使用 Isar Database 定义以下实体：
+
+User: id, firstName, lastName, username, phone, avatarPath, lastSeen, isVerified.
+
+Chat (Conversation): id, type (private/group/channel), title, avatarPath, lastMessageId, unreadCount, isPinned, folderId, draftText.
+
+Message: id, chatId, senderId, content, type (text/image/voice/service), timestamp, status (pending/sent/delivered/read), replyToId, forwardFromId.
+
+2. 状态管理 (State Management - Riverpod)
+AuthProvider: 管理登录状态、Token 刷新。
+
+ChatListProvider: 监听 Isar 数据库变化，实时更新首页列表（StreamProvider）。
+
+CurrentChatProvider: 管理当前聊天室的消息加载、分页、输入框状态。
+
+ConnectionProvider: 模拟 Socket 连接状态 (Connecting/Online/Offline)。
+
+3. 核心业务逻辑
+消息发送流程:
+
+UI 层调用 sendMessage(text).
+
+逻辑层生成临时 Message 对象，状态设为 pending，写入本地数据库（UI 立即更新显示）。
+
+异步发起网络请求（模拟）。
+
+成功：更新数据库状态为 sent（显示单勾）。
+
+失败：更新数据库状态为 failed（显示重试按钮）。
+
+长列表渲染优化:
+
+使用 ListView.builder。
+
+实现双向分页 (Bi-directional Pagination)：进入聊天室定位到未读位置，向上加载历史，向下加载最新。
+
+富文本解析:
+
+自定义 TextParser，识别 URL、Email、HashTag、Markdown (bold, italic, code)。
+
+第三部分：工程组件清单 (Component Checklist)
+这是我们在 VS Code 中将要创建的文件概览：
+
+lib/widgets/tg_app_bar.dart
+
+lib/widgets/tg_drawer.dart
+
+lib/widgets/chat/chat_bubble.dart (核心难点，包含各种子类型)
+
+lib/widgets/chat/input_bar.dart (包含录音动画逻辑)
+
+lib/widgets/chat/attachment_sheet.dart
+
+lib/widgets/common/avatar.dart (处理文字头像背景色)
+
+lib/services/local_db.dart (Isar 封装)
+
+lib/services/mock_socket.dart (模拟 WebSocket)
