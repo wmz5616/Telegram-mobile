@@ -1,53 +1,37 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/avatar.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../data/models/chat.dart';
 
 class ChatListItem extends StatelessWidget {
-  final String name;
-  final String message;
-  final String time;
-  final int unreadCount;
-  final bool isOnline;
-  final bool isRead;
-  final VoidCallback onTap;
+  final Chat chat;
 
-  const ChatListItem({
-    super.key,
-    required this.name,
-    required this.message,
-    required this.time,
-    required this.onTap,
-    this.unreadCount = 0,
-    this.isOnline = false,
-    this.isRead = false,
-  });
+  const ChatListItem({super.key, required this.chat});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        context.push('/chat/${chat.id}', extra: chat);
+      },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            Stack(
-              children: [
-                Avatar(text: name, radius: 26),
-                if (isOnline)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: AppColors.onlineGreen,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
+            Hero(
+              tag: 'avatar_${chat.id}',
+              child: CircleAvatar(
+                radius: 28,
+                backgroundColor: chat.avatarColor,
+                child: Text(
+                  chat.title.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-              ],
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -57,19 +41,22 @@ class ChatListItem extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: Colors.black87,
+                      Expanded(
+                        child: Text(
+                          chat.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
-                        time,
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        _formatTime(chat.lastTime),
+                        style: TextStyle(
                           fontSize: 13,
+                          color: Colors.grey[500],
                         ),
                       ),
                     ],
@@ -79,36 +66,36 @@ class ChatListItem extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          message,
+                          chat.lastMessage,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey[600],
+                            height: 1.1,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 15,
-                          ),
                         ),
                       ),
-                      if (unreadCount > 0)
+                      if (chat.unreadCount > 0)
                         Container(
                           margin: const EdgeInsets.only(left: 8),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue,
+                            color: Colors.blue,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            unreadCount.toString(),
+                            chat.unreadCount.toString(),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        )
-                      else if (isRead)
-                        const Icon(Icons.done_all,
-                            size: 16, color: AppColors.primaryBlue)
+                        ),
                     ],
                   ),
                 ],
@@ -118,5 +105,16 @@ class ChatListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    if (now.day == time.day &&
+        now.month == time.month &&
+        now.year == time.year) {
+      return DateFormat('HH:mm').format(time);
+    } else {
+      return DateFormat('MMM d').format(time);
+    }
   }
 }

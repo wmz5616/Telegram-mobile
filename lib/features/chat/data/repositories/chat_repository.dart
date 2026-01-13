@@ -1,59 +1,60 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import '../models/chat.dart';
-import '../models/message.dart';
-
-final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  return ChatRepository();
-});
 
 class ChatRepository {
-  // 暂时不连接 DatabaseService
-  // final DatabaseService _dbService = DatabaseService();
-
-  /// 1. 返回模拟的会话列表
-  Stream<List<Chat>> getChatsStream() async* {
-    // 模拟延迟，感觉像真的一样
+  Future<List<Chat>> getChats() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    
-    // 返回一些假数据
-    yield [
-      Chat()
-        ..id = 1
-        ..title = "Pavel Durov (Mock)"
-        ..lastMessage = "Welcome to Telegram Web!"
-        ..lastTime = DateTime.now()
-        ..unreadCount = 2,
-      Chat()
-        ..id = 2
-        ..title = "Saved Messages"
-        ..lastMessage = "image.png"
-        ..lastTime = DateTime.now().subtract(const Duration(hours: 2))
-        ..unreadCount = 0,
+
+    return [
+      Chat(
+        id: 1,
+        title: "Telegram Team",
+        lastMessage:
+            "Welcome to Telegram! This is a mock message to test layout.",
+        lastTime: DateTime.now().subtract(const Duration(minutes: 5)),
+        unreadCount: 3,
+        avatarColor: const Color(0xFF517DA2),
+      ),
+      Chat(
+        id: 2,
+        title: "Saved Messages",
+        lastMessage: "Project_specs_v2.pdf",
+        lastTime: DateTime.now().subtract(const Duration(hours: 1)),
+        unreadCount: 0,
+        avatarColor: Colors.blueAccent,
+      ),
+      Chat(
+        id: 3,
+        title: "Flutter Developers",
+        lastMessage: "Does anyone know how to optimize Hero animations?",
+        lastTime: DateTime.now().subtract(const Duration(hours: 4)),
+        unreadCount: 128,
+        avatarColor: Colors.orange,
+      ),
+      Chat(
+        id: 4,
+        title: "Design Group",
+        lastMessage: "Alice: Check out the new figma file.",
+        lastTime: DateTime.now().subtract(const Duration(days: 1)),
+        unreadCount: 5,
+        avatarColor: Colors.purple,
+      ),
+      Chat(
+        id: 5,
+        title: "Mom",
+        lastMessage: "Call me when you are free ❤️",
+        lastTime: DateTime.now().subtract(const Duration(days: 2)),
+        unreadCount: 1,
+        avatarColor: Colors.pink,
+      ),
+      Chat(
+        id: 6,
+        title: "Work Announcement",
+        lastMessage: "Office will be closed tomorrow for maintenance.",
+        lastTime: DateTime.now().subtract(const Duration(days: 3)),
+        unreadCount: 0,
+        avatarColor: Colors.green,
+      ),
     ];
   }
-
-  /// 2. 返回模拟的消息流
-  Stream<List<Message>> getMessagesStream(int chatId) async* {
-    yield [
-      Message()
-        ..id = 1
-        ..content = "Hi! This is running on Chrome without Database."
-        ..timestamp = DateTime.now()
-        ..isMe = false,
-      Message()
-        ..id = 2
-        ..content = "Great! I can see the UI now."
-        ..timestamp = DateTime.now().add(const Duration(seconds: 1))
-        ..isMe = true,
-    ];
-  }
-
-  /// 3. 模拟发送消息 (只会打印，不会保存)
-  Future<void> sendMessage(int chatId, String text) async {
-    print("【模拟发送】Chat: $chatId, Content: $text");
-    // 真实项目中这里会写入数据库
-  }
-
-  /// 4. 空函数，Web 模式下不需要
-  Future<void> seedInitialData() async {}
 }

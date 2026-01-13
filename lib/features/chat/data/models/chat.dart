@@ -1,21 +1,21 @@
-import 'package:isar/isar.dart';
+import 'package:flutter/material.dart';
 
 class Chat {
-  Id id = Isar.autoIncrement;
+  final int id;
+  final String title;
+  final String lastMessage;
+  final DateTime lastTime;
+  final int unreadCount;
+  final Color avatarColor;
+  final String? avatarUrl;
 
-  @Index(unique: true)
-  String? remoteId;
-  late String title;
-
-  String? avatarUrl;
-
-  String? lastMessage;
-
-  DateTime? lastTime;
-
-  int unreadCount = 0;
-
-  bool isPinned = false;
-
-  bool isMuted = false;
+  Chat({
+    required this.id,
+    required this.title,
+    required this.lastMessage,
+    required this.lastTime,
+    required this.unreadCount,
+    required this.avatarColor,
+    this.avatarUrl,
+  });
 }
